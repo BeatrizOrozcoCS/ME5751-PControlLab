@@ -12,14 +12,14 @@ class P_controller:
         self.robot = robot  # do not delete this line
         #k constants - for 3 iterations
         #        KP  KB  KA
-        #    1  5   -2    10 (done)
+        #    1  2 -10    10 (done)
         #    2  3   -2    6
         #    3  0.7 -2    10
          #   4  0.7 -2    5
         
-        self.ka = 6 # k_alpha
-        self.kb = -2 # k_beta   
-        self.kp = 3 # k_ho
+        self.ka = 2 # k_alpha
+        self.kb = -10 # k_beta   
+        self.kp = 10 # k_ho
 
         self.logging = logging
 
