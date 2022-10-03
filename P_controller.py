@@ -12,15 +12,14 @@ class P_controller:
         self.robot = robot  # do not delete this line
         #k constants - for 3 iterations
         #        KP  KB  KA
-        #    1	5	-2	  10
-        #    2	3	-2	  6
-        #    3	0.7	-2	  10
+        #    1  5   -2    10 (done)
+        #    2  3   -2    6
+        #    3  0.7 -2    10
          #   4  0.7 -2    5
-         #   5  0.2  0.5  2
-    	
-        self.ka = 10 # k_alpha
+        
+        self.ka = 6 # k_alpha
         self.kb = -2 # k_beta   
-        self.kp = 5 # k_ho
+        self.kp = 3 # k_ho
 
         self.logging = logging
 
@@ -35,11 +34,11 @@ class P_controller:
     def set_goal_points(self):
         # here is the example of destination code      
 
-       self.robot.state_des.add_destination(x=0,y=200,theta=math.pi/2)    #goal point 1
-       self.robot.state_des.add_destination(x=0,y=-200,theta=math.pi) #goal point 2
-       self.robot.state_des.add_destination(x=-100,y=0,theta=-math.pi) #goal point 3
-       self.robot.state_des.add_destination(x=-250,y=200,theta=math.pi) #goal point 4
-       self.robot.state_des.add_destination(x=0,y=200,theta=math.pi/2)    #goal point 5 - back to begginning
+       self.robot.state_des.add_destination(x=0,y=200,theta=math.pi/8)    #goal point 1
+       self.robot.state_des.add_destination(x=0,y=-200,theta=-math.pi/4) #goal point 2
+       self.robot.state_des.add_destination(x=-100,y=0,theta=-math.pi/8) #goal point 3
+       self.robot.state_des.add_destination(x=-250,y=200,theta=math.pi/4) #goal point 4
+       self.robot.state_des.add_destination(x=0,y=200,theta=0.5)    #goal point 5 - back to begginning
         
         
     def track_point(self):
@@ -64,9 +63,9 @@ class P_controller:
         
         print("og alpha: ", alpha)
 
-        if (alpha <= math.pi/2 or alpha >= -math.pi/2 ): # go forward
+        if (alpha <= math.pi/2 or alpha > -math.pi/2 ): # go forward
             beta = -d_theta - alpha
-            beta= normalizeAngle(beta)    #%normalizeAngle   set angle to the range [-pi,pi)
+            #beta= normalizeAngle(beta)    #%normalizeAngle   set angle to the range [-pi,pi)
             
             #calcualte wheelspeed
             c_v = self.kp*rho
@@ -78,7 +77,7 @@ class P_controller:
 
 
             beta = -d_theta- alpha
-            beta= normalizeAngle(beta)    #%normalizeAngle   set angle to the range [-pi,pi)
+           # beta= normalizeAngle(beta)    #%normalizeAngle   set angle to the range [-pi,pi)
   
 
             #calcualte wheelspeed
