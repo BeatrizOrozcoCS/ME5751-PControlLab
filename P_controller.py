@@ -19,7 +19,7 @@ class P_controller:
          #   5  0.2  0.5  2
     	
         self.ka = 10 # k_alpha
-        self.kb = -0.1 # k_beta   
+        self.kb = -2 # k_beta   
         self.kp = 5 # k_ho
 
         self.logging = logging
