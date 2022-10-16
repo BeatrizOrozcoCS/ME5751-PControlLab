@@ -14,7 +14,7 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/objectsintheway.png") #load map
+            self.load_map(map = "maps/test.png") #load map
         except:
             self.graphics.show_map_button.configure(state="disabled")
             print ("no map loaded") #if fail to find the map png
@@ -93,7 +93,7 @@ class cost_map:
             for j in range(0, numCols):
                 currentItem_visitlist.append(False)
                 currentItem_list.append(grid[i][j])
-                currentItem_distancelist.append(black)
+                currentItem_distancelist.append(white)
 
             visitedList.append(currentItem_visitlist)
             copyList.append(currentItem_list)
@@ -140,30 +140,27 @@ class cost_map:
             #pop the queue
             queuelist.pop(0)
             numChildren = numChildren -1 #subtract parent count
-            bufferzone = 0 #adds a bufferzone around the dark pixels
-            
+           
             if (posx-1) >= 0: #Left
                 if visitedList[posx-1][posy] == False:
                     visitedList[posx-1][posy] = True 
                     queuelist.append([posx-1,posy])
                     distanceList[posx-1][posy] = distance
-                    #potentialList[posx-1][posy] = math.exp(-distance+15)
-                    #potentialList[posx-1][posy] = distance * 0.85
+                    potentialList[posx-1][posy] = self.determine_costmap(distance)
 
                 if (posy+1) < numCols: 
                     if visitedList[posx-1][posy+1] == False: #top left
                         visitedList[posx-1][posy+1] = True 
                         queuelist.append([posx-1,posy+1])
                         distanceList[posx-1][posy+1] = distance+1 #diagonals needs the distnace increased by one
-                        #potentialList[posx-1][posy+1] = math.exp(-distance+15)
-                        #potentialList[posx-1][posy] = distance * 0.85
+                        potentialList[posx-1][posy+1] = self.determine_costmap(distance)
+
                 if (posy-1) >= 0:
                     if visitedList[posx-1][posy-1] == False: # bottom left
                         visitedList[posx-1][posy-1] = True 
                         queuelist.append([posx-1,posy-1])
                         distanceList[posx-1][posy-1] = distance+1 #diagonals needs the distnace increased by one
-                        #potentialList[posx-1][posy-1] = math.exp(-distance+15)
-                        #potentialList[posx-1][posy] = distance * 0.85
+                        potentialList[posx-1][posy-1] = self.determine_costmap(distance)
                
 
             if posx+1 < numRows: #right
@@ -171,23 +168,21 @@ class cost_map:
                     visitedList[posx+1][posy] = True
                     queuelist.append([posx+1,posy])
                     distanceList[posx+1][posy] = distance
-                    #potentialList[posx+1][posy] = math.exp(-distance+15)
-                    #potentialList[posx+1][posy] = distance * 0.85
+                    potentialList[posx+1][posy] = self.determine_costmap(distance)
+
                 if (posy+1) < numCols: 
                     if visitedList[posx+1][posy+1] == False: #top right
                         visitedList[posx+1][posy+1] = True 
                         queuelist.append([posx+1,posy+1])
                         distanceList[posx+1][posy+1] = distance+1 #diagonals needs the distnace increased by one
-                        #potentialList[posx+1][posy+1] = math.exp(-distance+15)
-                        #potentialList[posx-1][posy] = distance * 0.85
+                        potentialList[posx+1][posy+1] = self.determine_costmap(distance)
+
                 if (posy-1) >= 0:
                     if visitedList[posx+1][posy-1] == False: # bottom right
                         visitedList[posx+1][posy-1] = True 
                         queuelist.append([posx+1,posy-1])
                         distanceList[posx+1][posy-1] = distance+1 #diagonals needs the distnace increased by one
-                        #potentialList[posx-1][posy] = math.exp(-distance+15)
-                        #potentialList[posx-1][posy] = distance * 0.85
-
+                        potentialList[posx+1][posy-1] = self.determine_costmap(distance)
 
 
             if posy-1 >= 0: #bottom
@@ -195,24 +190,36 @@ class cost_map:
                     visitedList[posx][posy-1] = True
                     queuelist.append([posx,posy-1])
                     distanceList[posx][posy-1] = distance
-                    #potentialList[posx][posy-1] = math.exp(-distance+15)
-                    #potentialList[posx][posy-1] = distance * 0.85
+                    potentialList[posx][posy-1] = self.determine_costmap(distance)
+
 
             if posy+1 < numCols: #top
                 if visitedList[posx][posy+1] == False:
                     visitedList[posx][posy+1] = True
                     queuelist.append([posx,posy+1])
                     distanceList[posx][posy+1] = distance
-                    #potentialList[posx][posy+1] = math.exp(-distance+15)
-                    #potentialList[posx][posy+1] = distance * 0.85
+                    potentialList[posx][posy+1] = self.determine_costmap(distance)
+   
 
-        self.costmap = np.array(distanceList)
-        np.savetxt("Log/distancemap.txt",self.costmap) #pure distance map to check
+        self.costmap  = np.array(distanceList)
+        np.savetxt("Log/distancemap.txt",self.costmap ) #pure distance map to check
+
+        self.costmap = np.array(potentialList)
+        np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
         print(self.costmap)
         pass
 
+    def determine_costmap(self,distance):
+        potential_cost = 0
+        buffer = 0 #how many pixels away
+        if distance < buffer:
+           potential_cost = 0
+        else:
+            potential_cost = math.exp(-distance+100)+255
+        return potential_cost
 
     #scale costmap to 0 - 255 for visualization
     def get_vis_map(self):
-        self.vis_map = np.uint8(self.costmap)#np.uint8(255-self.costmap/4.0) 
+        self.vis_map = np.uint8(255-self.costmap/4.0) #self.costmap#np.uint8(self.costmap)
+        print(self.vis_map)
         np.savetxt("Log/vismap.txt",self.vis_map)
