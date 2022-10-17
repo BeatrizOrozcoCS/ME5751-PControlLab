@@ -14,7 +14,7 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/test.png") #load map
+            self.load_map(map = "maps/office.png") #load map
             #4 maps
             # office
             #roadmap
@@ -87,8 +87,8 @@ class cost_map:
         distanceList = []
         potentialList = []
 
-        print("numrows: ", numRows)
-        print("numCols: ", numCols)
+        #print("numrows: ", numRows)
+        #print("numCols: ", numCols)
 
         # create a visited?list, init it to false to confirm if a node has been vistied before
         # make a copy of the inputed list
@@ -226,5 +226,5 @@ class cost_map:
     #scale costmap to 0 - 255 for visualization
     def get_vis_map(self):
         self.vis_map = np.uint8(self.costmap) #self.costmap#np.uint8(self.costmap)
-        print(self.vis_map)
+        #print(self.vis_map)
         np.savetxt("Log/vismap.txt",self.vis_map)
