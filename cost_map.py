@@ -208,7 +208,7 @@ class cost_map:
    
 
         self.costmap = np.array(potentialList)
-        np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
+        #np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
         #print(self.costmap)#debugging
 
         pass
@@ -217,9 +217,12 @@ class cost_map:
     def determine_costmap(self,distance):
         potential_cost = 0
         bufferzone = 30
-        pEq2 = math.exp(-distance+bufferzone)+255
+        if distance > bufferzone:#onces its plenty away for desired bufferzone
+            pEq2=255
+        else:
+            pEq2 = math.exp(-distance+bufferzone)+200
         pEq1 = (bufferzone)/math.pow(distance,2)+255
-        potential_cost = pEq1
+        potential_cost = pEq2
 
         return potential_cost
 
