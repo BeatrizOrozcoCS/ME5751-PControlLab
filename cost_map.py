@@ -107,7 +107,7 @@ class cost_map:
             potentialList.append(currentItem_distancelist)
         #create a list that will act as your queue
         queuelist = []
-        #find all land (1'sr) and append it to my queue
+        #find all occupied spaces (1'sr) and append it to my queue
         for i in range(0,numRows):
             for j in range(0,numCols):
                 position = []
@@ -122,7 +122,7 @@ class cost_map:
         #start breadth-first-search
         while (len(queuelist)>0):
             # asumptions seach one distance away (child) from beginning land points
-            # after searching all the beining landpoints  distance grows by 1 once every level is finished and keep searching one distance away and continue until the end of queue
+            # after searching all the beining occupied spaces  distance grows by 1 once every level is finished and keep searching one distance away and continue until the end of queue
             # possible neighbors - one distance away
             # {
             #  (n,(n-1)) #left
@@ -215,14 +215,17 @@ class cost_map:
 
 
     def determine_costmap(self,distance):
-        potential_cost = 0
+        potential_cost = 0 #declare potential_cost varible
         bufferzone = 30
         if distance > bufferzone:#onces its plenty away for desired bufferzone
             pEq2=255
+            pEq1 = 255
         else:
-            pEq2 = math.exp(-distance+bufferzone)+200
-        pEq1 = (bufferzone)/math.pow(distance,2)+255
-        potential_cost = pEq2
+            pEq2 = -math.exp(-distance+bufferzone)+200
+            pEq1 = (-bufferzone)/math.pow(distance/2,2)+200
+        
+            
+        potential_cost = pEq1 #change this to selected pEq1 or pEq2
 
         return potential_cost
 
@@ -231,3 +234,4 @@ class cost_map:
         self.vis_map = np.uint8(self.costmap) #self.costmap#np.uint8(self.costmap)
         #print(self.vis_map)
         np.savetxt("Log/vismap.txt",self.vis_map)
+
