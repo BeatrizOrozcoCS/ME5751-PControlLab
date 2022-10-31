@@ -30,6 +30,18 @@ class path_planner:
         self.set_start(world_x=0, world_y=0)
         self.set_goal(world_x=0.0, world_y=0.0, world_theta=.0)
 
+
+        #test points for maz
+        #self.set_goal(world_x=209.0, world_y=162.0, world_theta=.0) #for point [88,459]
+        #self.set_goal(world_x=-205.0, world_y=-45.0, world_theta=.0) #for point [295,45]
+        #self.set_goal(world_x=-217.0, world_y=33.0, world_theta=.0) #for point [217,36]
+
+        #testpoints for concentric circles
+        #self.set_goal(world_x=172.0, world_y=192.0, world_theta=.0) #for point [58,422]
+        #self.set_goal(world_x=-205.0, world_y=-61.0, world_theta=.0) # [311,45]
+        #self.set_goal(world_x=-22.0, world_y=228.0, world_theta=.0) # [22,263]
+
+
         self.plan_path()
         self._show_path()
 
@@ -88,11 +100,11 @@ class path_planner:
         self.graphics.draw_path(self.path_img)
 
     # If you want to save the path as an image, un-comment the following line:
-    # self.path_img.save('Log\path_img.png')
+        #self.path_img.save('Log\path_img.png')
 
     # If you want to output an image of map and path, un-comment the following two lines
-    # self.path_img = toimage(self.map_img_np)
-    # self.path_img.show()
+        #self.path_img = Image(self.map_img_np)
+        #self.path_img.show()
 
     def plan_path(self):
         # The major program you are going to write!
@@ -104,16 +116,21 @@ class path_planner:
 
         # points = bresenham(self.start_state_map.map_i, self.start_state_map.map_j, self.goal_state_map.map_i,
         #                    self.goal_state_map.map_j)
-        bfsdistance = self.sp_to_gp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
-        eucdialiandistance = self.gp_to_sp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
-        overallcostmap = np.array(bfsdistance)  + np.array(eucdialiandistance) * (4-(np.array(grid)/255)/3)
+        bfsdistance = self.sp_to_gp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j) # (g) manhantann distance from start 
+        eucdialiandistance = self.gp_to_sp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)# (h) educdialin distance form end to start 
+        u = (4-(np.array(grid)/255)/3) #u depends on the bufferzone varible on path_planner.py
+        overallcostmap = np.array(bfsdistance)  + np.array(eucdialiandistance) * u# overall node cost map
         np.savetxt("Log/overallcostmap.txt",np.array(overallcostmap)) 
+
         points = astar(overallcostmap, start_point, end_point)
 
-        for p in points:
-            self.path.add_pose(Pose(map_i=p[0][0], map_j=p[0][1], theta=0))  # theta is wrong
-
-        self.path.save_path(file_name="Log\path.csv")
+        if (points) == None:
+            print("path not possible")
+        else:
+            for p in points:
+                self.path.add_pose(Pose(map_i=p[0][0], map_j=p[0][1], theta=0))  # theta is wrong
+            print("path length: ",len(points))
+            self.path.save_path(file_name="Log\path.csv")
 
 
 
@@ -322,9 +339,8 @@ class Node:
         self.h = grid[end_node.position[0]][end_node.position[1]]
 
     def g_cost(self, start_node):
-        if self.h == 0:
+        if self.h == 0: # if the h_node = 0 its an obstacle, make sure the cost is evalated 
             self.g = 1000000
-
         else:
             self.g = 0
 
@@ -378,8 +394,7 @@ def astar(grid, start, end): # Inputs are the NP array, start index, and end ind
                 print("counter: ", counter)
                 print("time elasped: ", et-st)
                 planF = plan[::-1]
-                if len(planF) ==0:
-                    print("path not possible")
+
                 return planF
 
             # Find neighbors
@@ -394,7 +409,7 @@ def astar(grid, start, end): # Inputs are the NP array, start index, and end ind
 
                 # Do not search walls
                 # print(grid[search_loc])
-                if abs(grid[search_loc]) <5:
+                if abs(grid[search_loc]) <5: #seach if its neighboring tot he end point
                     if end_node.position[0] - search_loc[0] == 0 and end_node.position[1] - search_loc[1] == 0:
                         plan = []
                         while currentN is not None:
@@ -405,9 +420,7 @@ def astar(grid, start, end): # Inputs are the NP array, start index, and end ind
                         print("time elasped: ", et-st)
                         
                         planF = plan[::-1]
-                        
-                        if len(planF) ==0:
-                            print("path not possible")
+                    
                         return planF
                     continue
 
