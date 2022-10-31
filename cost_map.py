@@ -14,12 +14,14 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/office.png") #load map
+            self.load_map(map = "maps/maze1.png") #load map
             #4 maps
             # office
             #roadmap
             #objectsintheway
-            #test
+            #tests
+            # ultimate test
+
 
         except:
             self.graphics.show_map_button.configure(state="disabled")
@@ -152,21 +154,21 @@ class cost_map:
                     visitedList[posx-1][posy] = True 
                     queuelist.append([posx-1,posy])
                     distanceList[posx-1][posy] = distance
-                    potentialList[posx-1][posy] = self.determine_costmap(distance)
+                    potentialList[posx-1][posy] = self.calculate_costmap(distance)
 
                 if (posy+1) < numCols: 
                     if visitedList[posx-1][posy+1] == False: #top left
                         visitedList[posx-1][posy+1] = True 
                         queuelist.append([posx-1,posy+1])
-                        distanceList[posx-1][posy+1] = distance+1 #diagonals needs the distnace increased by one
-                        potentialList[posx-1][posy+1] = self.determine_costmap(distance)
+                        distanceList[posx-1][posy+1] = distance*1.4 #diagonals needs the distnace increased by one
+                        potentialList[posx-1][posy+1] = self.calculate_costmap(distance)
 
                 if (posy-1) >= 0:
                     if visitedList[posx-1][posy-1] == False: # bottom left
                         visitedList[posx-1][posy-1] = True 
                         queuelist.append([posx-1,posy-1])
-                        distanceList[posx-1][posy-1] = distance+1 #diagonals needs the distnace increased by one
-                        potentialList[posx-1][posy-1] = self.determine_costmap(distance)
+                        distanceList[posx-1][posy-1] = distance*1.4 #diagonals needs the distnace increased by one
+                        potentialList[posx-1][posy-1] = self.calculate_costmap(distance)
                
 
             if posx+1 < numRows: #right
@@ -174,55 +176,58 @@ class cost_map:
                     visitedList[posx+1][posy] = True
                     queuelist.append([posx+1,posy])
                     distanceList[posx+1][posy] = distance
-                    potentialList[posx+1][posy] = self.determine_costmap(distance)
+                    potentialList[posx+1][posy] = self.calculate_costmap(distance)
 
                 if (posy+1) < numCols: 
                     if visitedList[posx+1][posy+1] == False: #top right
                         visitedList[posx+1][posy+1] = True 
                         queuelist.append([posx+1,posy+1])
-                        distanceList[posx+1][posy+1] = distance+1 #diagonals needs the distnace increased by one
-                        potentialList[posx+1][posy+1] = self.determine_costmap(distance)
+                        distanceList[posx+1][posy+1] = distance*1.4 #diagonals needs the distnace increased by one
+                        potentialList[posx+1][posy+1] = self.calculate_costmap(distance)
 
                 if (posy-1) >= 0:
                     if visitedList[posx+1][posy-1] == False: # bottom right
                         visitedList[posx+1][posy-1] = True 
                         queuelist.append([posx+1,posy-1])
-                        distanceList[posx+1][posy-1] = distance+1 #diagonals needs the distnace increased by one
-                        potentialList[posx+1][posy-1] = self.determine_costmap(distance)
+                        distanceList[posx+1][posy-1] = distance*1.4 #diagonals needs the distnace increased by one
+                        potentialList[posx+1][posy-1] = self.calculate_costmap(distance)
 
 
             if posy-1 >= 0: #bottom
                 if visitedList[posx][posy-1] == False:
                     visitedList[posx][posy-1] = True
                     queuelist.append([posx,posy-1])
-                    distanceList[posx][posy-1] = distance
-                    potentialList[posx][posy-1] = self.determine_costmap(distance)
+                    distanceList[posx][posy-1] = distance*1.4
+                    potentialList[posx][posy-1] = self.calculate_costmap(distance)
 
 
             if posy+1 < numCols: #top
                 if visitedList[posx][posy+1] == False:
                     visitedList[posx][posy+1] = True
                     queuelist.append([posx,posy+1])
-                    distanceList[posx][posy+1] = distance
-                    potentialList[posx][posy+1] = self.determine_costmap(distance)
+                    distanceList[posx][posy+1] = distance*1.4
+                    potentialList[posx][posy+1] = self.calculate_costmap(distance)
    
-
-        self.costmap = np.array(potentialList)
-        #np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
+        #np.savetxt("Log/distancemap.txt",np.array(distanceList)) 
+        self.costmap = potentialList
+        np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
         #print(self.costmap)#debugging
-
-        pass
-
-
-    def determine_costmap(self,distance):
+        
+        pass    
+    
+ 
+    def calculate_costmap(self,distance):
         potential_cost = 0 #declare potential_cost varible
-        bufferzone = 30
+        bufferzone = 10
         if distance > bufferzone:#onces its plenty away for desired bufferzone
-            pEq2=255
+            pEq2 = 255
             pEq1 = 255
+        elif distance <= bufferzone/4.0:
+            pEq1 = 0
+        
         else:
-            pEq2 = -math.exp(-distance+bufferzone)+200
-            pEq1 = (-bufferzone)/math.pow(distance/2,2)+200
+            pEq2 = -math.exp(-distance/2+bufferzone)+200
+            pEq1 = (-bufferzone)/math.pow(distance/4,2)+200
         
             
         potential_cost = pEq1 #change this to selected pEq1 or pEq2
