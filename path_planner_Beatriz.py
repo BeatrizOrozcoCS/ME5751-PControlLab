@@ -9,7 +9,7 @@ from queue import PriorityQueue
 from bsTree import *
 from Path import *
 import inspect
-
+from PIL import Image, ImageTk
 # from Queue import Queue
 
 
@@ -27,51 +27,8 @@ class path_planner:
         self._init_path_img()
         self.path = Path()
 
-# 14 136 (-228,107)
-# 13 141 (-133 103)
-# 149 73 (-167 94)
-# 142 112
-# 91 85   (-173,147)
-# 12 23   (-233,233)
-# 487 18   (-191,-195)
-# 250 250  (0,0)
-
-#         self.set_start(world_x=0, world_y=0)
-#         self.set_goal(world_x=-228, world_y=107)
-        
-        self.set_start(world_x=-228, world_y=107)
-        self.set_goal(world_x=-133, world_y=103)
-        
-        self.set_start(world_x=-133, world_y=103)
-        self.set_goal(world_x=-167, world_y=94)
-        
-        self.set_start(world_x=-167, world_y=94)
-        self.set_goal(world_x=-173, world_y=147)
-        
-        self.set_start(world_x=-173, world_y=147)
-        self.set_goal(world_x=-233, world_y=233)
-        
-        self.set_start(world_x=-191, world_y=-195)
-        self.set_goal(world_x=-0, world_y=0)
-        
-        #self.set_goal(world_x= world2map(map_i=487,map_j = 18)[0], world_y=map2world(map_i=487,map_j = 18)[1], world_theta=.0)
-        
-#         self.set_start(world_x=map2world (487,18)[0], world_y=map2world(487,18)[1])
-#         self.set_goal(world_x=map2world (12,23)[0], world_y=map2world(12,23)[1], world_theta=.0)
-#         
-#         self.set_start(world_x=map2world (12,23)[0], world_y=map2world(12,23)[1])
-#         self.set_goal(world_x=map2world (91,85)[0], world_y=map2world(91,85)[1], world_theta=.0)
-        
-
-        #test points for maz
-        #self.set_goal(world_x=209.0, world_y=162.0, world_theta=.0) #for point [88,459]
-        #self.set_goal(world_x=-205.0, world_y=-45.0, world_theta=.0) #for point [295,45]
-        #self.set_goal(world_x=-217.0, world_y=33.0, world_theta=.0) #for point [217,36]
-
-        #testpoints for concentric circles
-        #self.set_goal(world_x=172.0, world_y=192.0, world_theta=.0) #for point [58,422]
-        #self.set_goal(world_x=-205.0, world_y=-61.0, world_theta=.0) # [311,45]
-        #self.set_goal(world_x=-22.0, world_y=228.0, world_theta=.0) # [22,263]
+        self.set_start(world_x=0, world_y=-100)
+        self.set_goal(world_x=220.0, world_y=220.0, world_theta=.0)
 
         self.plan_path()
         self._show_path()
@@ -131,11 +88,11 @@ class path_planner:
         self.graphics.draw_path(self.path_img)
 
     # If you want to save the path as an image, un-comment the following line:
-        self.path_img.save('Log\path_img.png')
+    # self.path_img.save('Log\path_img.png')
 
     # If you want to output an image of map and path, un-comment the following two lines
-        #self.path_img = Image(self.map_img_np)
-        #self.path_img.show()
+    # self.path_img = toimage(self.map_img_np)
+    # self.path_img.show()
 
     def plan_path(self):
         # The major program you are going to write!
@@ -147,25 +104,17 @@ class path_planner:
 
         # points = bresenham(self.start_state_map.map_i, self.start_state_map.map_j, self.goal_state_map.map_i,
         #                    self.goal_state_map.map_j)
-        bfsdistance = self.sp_to_gp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j) # (g) manhantann distance from start 
-        eucdialiandistance = self.gp_to_sp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)# (h) educdialin distance form end to start 
-        u = (4-(np.array(grid)/255)/3) #u depends on the bufferzone varible on path_planner.py
-        overallcostmap = np.array(bfsdistance)  + np.array(eucdialiandistance) * u*5# overall node cost map
-        np.savetxt("Log/overallcostmap.txt",np.array(overallcostmap)) 
-
-        points = astar(overallcostmap, start_point, end_point)
-
-        if (points) == None:
-            print("path not possible")
-        else:
-            for p in points:
-                self.path.add_pose(Pose(map_i=p[0][0], map_j=p[0][1], theta=0))  # theta is wrong
-            print("path length: ",len(points))
-            self._show_path()
-            self.path.save_path(file_name="Log\path.csv")
+        bfsdistance = self.sp_to_gp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
+        #print(bfsdistance)
+        eucdialiandistance = self.gp_to_sp_bfs(self.start_state_map.map_i,self.start_state_map.map_j,self.goal_state_map.map_i,self.goal_state_map.map_j)
 
 
+        points = self.aStar(start_point, end_point,bfsdistance,eucdialiandistance)
 
+        for p in points:
+            self.path.add_pose(Pose(map_i=p[0][0], map_j=p[0][1], theta=0))  # theta is wrong
+
+        self.path.save_path(file_name="Log\path.csv")
 
     def sp_to_gp_bfs(self,x1,y1,x2,y2): #manhantann distance from start point to goal point
         #init varibles
@@ -354,145 +303,183 @@ class path_planner:
         np.savetxt("Log/distancemapgptosp.txt",np.array(distanceList))     
         return distanceList
 
-class Node:
-    def __init__(self, parent=None, position=(None, None), ):
-        # Initialize Relationships
-        self.parent = parent
-        # Initialize Positions
-        self.position = position
-        self.f = 0
-        self.h = 0
-        self.g = 0
 
-    def f_cost(self):
-        self.f = self.g + self.h
+    def aStar(self,start_point,end_point, distance_man_s2g, distance_euc_g2s):
 
-    def h_cost(self, end_node,grid):
-        self.h = grid[end_node.position[0]][end_node.position[1]]
+        #init varibles
+        points = [] #path to the goal
+        pointsset = [] #all paths 
 
-    def g_cost(self, start_node):
-        if self.h == 0: # if the h_node = 0 its an obstacle, make sure the cost is evalated 
-            self.g = 1000000
-        else:
-            self.g = 0
+        openlist = [start_point] #unvisted points
+        closedlist = [] #vistied points
 
-def astar(grid, start, end): # Inputs are the NP array, start index, and end index
-    st = time.time()
-    # Initialize start and end nodes
-    end_node = Node(None, end)
-    start_node = Node(None, start)
-    start_node.g = 0
-    start_node.h_cost(end_node,grid)
-    start_node.f_cost()
+        pathlen = {}
+        pathlen[start_point] = 0
 
-    # Initialize the Queues
-    openQ = queue.PriorityQueue()
-    openL = []
-    closedL = []
-    
-    
-    #input obstacles into closed L
-    numRows = np.size(grid,0)
-        #print(numRows)
-    numCols = np.size(grid,1)
-    for i in range(0, numRows):
-        for j in range(0, numCols):
-            if grid[i][j] == 0:
-                closedL.append(Node(None,(i,j)))
+        parentnode = {} 
+        parentnode[start_point] = start_point
 
 
-    # Input starting node into open queue
-    counter = 0
-    openQ.put((start_node.f, counter, start_node))
-    openL.append(start_node)
+        #varibles to start aStar
+        grid = self.costmap.costmap
+        overallcostmap = np.array(distance_man_s2g)  + np.array(distance_euc_g2s) * (4-(np.array(grid)/255)/3)
 
-    # Initialize Neighbor search indexes
-    neighbors = [(0,1),(1,0),(-1,0),(0,-1)]
+        while len(openlist)>0:
+            node = None
+            for n in openlist:
+                if node == None or overallcostmap[n[0]][n[1]] < overallcostmap[node[0]][node[1]]:
+                    node = n
 
-    try:
-        while  openQ.empty() is not True:
-            # Pop Current Node with lowest F value
-            currentN = openQ.get()[2]
-            openL.remove(currentN)
-            closedL.append(currentN)
+            if node == node: #no other path exist
+                break
+            if node in end_point:
+                finalvalue =  overallcostmap[node[0]][node[1]]
+                recreate_path = []
 
-            # Verify if we have reached our goal
-            if currentN.position == end_node.position:
-                plan = []
-                while currentN is not None:
-                    plan.append([currentN.position])
-                    currentN = currentN.parent
-                et = time.time()
-                print("counter: ", counter)
-                print("time elasped: ", et-st)
-                planF = plan[::-1]
+                next = node
+                while parentnode[next] != next:
+                    recreate_path.append(next)
+                    next = parentnode[next]
+                recreate_path.append(start_point)
+                recreate_path.reverse()
 
-                return planF
+                pointsset.append(recreate_path,finalvalue)
+                openlist.remove(node)
+                closedlist.append(node)
+                continue
+            path_cost = overallcostmap[node]
+            #for m in range()
 
-            # Find neighbors
-            children = [] # Initialize children list
-            for neighbor in neighbors:
-                search_loc = (currentN.position[0]+neighbor[0], currentN.position[1]+neighbor[1])
+        #init varibles to return
+        counter = 0
+        points =[]
+        st = time.time() #gett
 
-                # Ensure index is within bounds
-                if (np.shape(grid)[0]-1) < search_loc[0] < 0 or (np.shape(grid)[1]-1) < search_loc[1] < 0:
-                    # If out of bounds continue to nexrt neighbor
-                    continue
-
-                # Do not search walls
-                # print(grid[search_loc])
-                if abs(grid[search_loc]) <5: #seach if its neighboring tot he end point
-                    if end_node.position[0] - search_loc[0] == 0 and end_node.position[1] - search_loc[1] == 0:
-                        plan = []
-                        while currentN is not None:
-                            plan.append([currentN.position])
-                            print(currentN.position)
-                            currentN = currentN.parent
-                        et = time.time()
-                        print("counter: ", counter)
-                        print("time elasped: ", et-st)
-                        
-                        planF = plan[::-1]
-                    
-                        return planF
-                    continue
-
-                # Enlist Children
-
-                childN = Node(currentN, search_loc)
-                children.append(childN)
-
-            # Search through children
-            for child in children:
-                # Check if child has been searched previously
-                if len([searchedN for searchedN in closedL if searchedN == child]) > 0:
-                    continue
-                # If it hasnt been searched calculate costs
-                
-                child.g = currentN.g + 1
-                child.h_cost(currentN,grid)
-                child.f_cost()
-
-                # Check if child is in open list
-                if len([node for node in openL if child.position == node.position and node.f >= child.f]) > 0 :  # If node is in list and has more steps from start do not add
         
-                    continue
-                counter += 1
-                #print(counter)
-                #print(child.position)
-                openQ.put((child.f, counter, child))
-                openL.append(child)
+        
+        #                                                                                                                                   
+        queuelist = [] #
+        visitedList = [] 
+        childrenList=[]
+        grid = self.costmap.costmap
+        numRows = np.size(grid,0)
+        numCols = np.size(grid,1)
 
-    except KeyboardInterrupt:
-        plan = []
-        while currentN is not None:
-            plan.append([currentN.position])
-            currentN = currentN.parent
-        et = time.time()
-        print("counter: ", counter)
-        print("time elasped: ", et-st)
-        planF = plan[::-1]
-        return planF
+        #preload lists with default values
+        for i in range(0, numRows):
+            currentItem_visitlist = []
+            for j in range(0, numCols):
+                currentItem_visitlist.append(False)
+ 
+            visitedList.append(currentItem_visitlist)
+
+        for i in range(0, numRows): #this is so it does not queue pixels that are obstacles
+            for j in range(0, numCols):
+                if grid[i][j] == 0:
+                    visitedList[i][j] = True 
+ 
+        #append queue from starting position find the distance 
+        queuelist.append(start_point)
+        visitedList[start_point[0]][start_point[1]] = True 
+
+        #check if given point is inside at an obstacle
+        if visitedList[end_point[0]][end_point[1]] == True:
+            print("unable to go to point, point is at an obstacle")
+            return points
+
+        #find all occupied pixels and set them to true as well
+        #numChildren = len(queuelist)
+        #start astar
+        print("starting aStar")
+
+        neighbors = [(-1,0),(-1,1),(-1,-1),(1,0), (1,1), (1,-1), (0,1),(0,-1)]
+
+        while (len(queuelist)>0):
+            #if numChildren == 0: #increase the distance when all parents are popped out
+            #    numChildren = len(queuelist)
+            #    distance +=1
+            localchildrenList = []
+            costList = []
+            #get the position value
+            posx = queuelist[0][0]
+            posy = queuelist[0][1]
+            print(posx,posy)
+            #pop the queue
+            queuelist.pop(0)
+            #numChildren = numChildren -1 #subtract parent count
+
+
+            # search neighbors
+            localcostList = [pow(10,9),pow(10,9),pow(10,9),pow(10,9),pow(10,9),pow(10,9),pow(10,9),pow(10,9)]
+
+            if (posx-1) >= 0: #Left
+                if visitedList[posx-1][posy] == False:
+                    localchildrenList.append([posx-1,posy])
+                    localcostList[0] = overallcostmap[posx-1][posy]
+
+            if (posx-1) >= 0 and (posy+1) < numCols: 
+                if visitedList[posx-1][posy+1] == False: #top left
+                    localchildrenList.append([posx-1,posy+1])
+                    localcostList[1] = overallcostmap[posx-1][posy+1]
+
+            if (posx-1) >= 0 and (posy-1) >= 0:
+                if visitedList[posx-1][posy-1] == False: # bottom left
+                    visitedList[posx-1][posy-1] == True
+                    localchildrenList.append([posx-1,posy-1])
+                    localcostList[2] = overallcostmap[posx-1][posy-1]
+            
+            if posx+1 < numRows: #right
+                if visitedList[posx+1][posy] == False:
+                    visitedList[posx+1][posy] == True
+                    localchildrenList.append([posx+1,posy])
+                    localcostList[3] = overallcostmap[posx+1][posy]
+
+            if posx+1 < numRows and (posy+1) < numCols: 
+                if visitedList[posx+1][posy+1] == False: #top right
+                    visitedList[posx+1][posy+1] == True
+                    localchildrenList.append([posx+1,posy+1])
+                    localcostList[4] = overallcostmap[posx+1][posy+1]
+                    
+            if posx+1 < numRows and (posy-1) >= 0:
+                if visitedList[posx+1][posy-1] == False: # bottom right
+                    visitedList[posx+1][posy-1] == True
+                    localchildrenList.append([posx+1,posy-1])
+                    localcostList[5] = overallcostmap[posx+1][posy-1] 
+
+            if posy-1 >= 0: #bottom
+                if visitedList[posx][posy-1] == False:
+                    visitedList[posx][posy-1] == True
+                    localchildrenList.append([posx,posy-1])
+                    localcostList[6] = overallcostmap[posx][posy-1]
+
+            if posy+1 < numCols: #top
+                if visitedList[posx][posy+1] == False:
+                    visitedList[posx][posy+1] = True
+                    localchildrenList.append([posx,posy+1])
+                    localcostList[7] = overallcostmap[posx][posy+1]
+
+            #check if endpoint is within the neightbors
+            if end_point in localchildrenList:
+                et = time.time()
+                print("Time Elasped: ",et-st)
+                print("Counter: ", counter) 
+                return points
+
+            #after searching all the nieghbors append the queue 
+            minvalueIndex = localcostList.index(min(localcostList))
+            print(minvalueIndex)
+            print(localcostList)
+            print(localchildrenList[minvalueIndex])
+            queuelist.append(localchildrenList[minvalueIndex])
+
+
+            visitedList[localchildrenList[minvalueIndex][0]][localchildrenList[minvalueIndex][1]]== True
+            #print([localchildrenList[minvalueIndex][0]][localchildrenList[minvalueIndex][1]])
+            points.append(queuelist[0])
+            counter = counter +1 
+            #print(counter)
+
+
 
 
 def bresenham(x1, y1, x2, y2):
@@ -551,4 +538,5 @@ def bresenham(x1, y1, x2, y2):
         points.reverse()
 
     # print points
+    print(points)
     return points

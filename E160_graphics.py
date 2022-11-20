@@ -7,15 +7,15 @@ from cost_map import *
 
 #Swtich these two lines to choose planner
 
-from path_planner import *
-#from prm_planner import *
-
+#from path_planner import * # a*
+from prm_planner import * # greddy PRM
+#from Beatriz_prmplanner import * #random no bias
 class E160_graphics:
     def __init__(self, environment):
         self.environment = environment
         self.tk = Tk()
         self.tk.geometry("+300+5")
-        self.scale = 350 #This number should be the same as the map image size
+        self.scale = 250 #This number should be the same as the map image size
         self.canvas = Canvas(self.tk, width=self.environment.width*self.scale, height=self.scale* self.environment.height)
         self.tk.title("Motion Planning")
         self.canvas.bind("<Button-1>", self.callback_left)
@@ -63,8 +63,8 @@ class E160_graphics:
         self.map = cost_map(self)
         
         # Un-comment the following two lines for lab 3 and lab 4
-        # self.path = path_planner(self)
-        # self.canvas.bind("<Button-3>", self.callback_right)
+        self.path = path_planner(self)
+        self.canvas.bind("<Button-3>", self.callback_right)
 
         # try:
         #   self.map = cost_map(self) 
@@ -205,14 +205,14 @@ class E160_graphics:
         desired_points = self.reverse_scale_points([float(event.x), float(event.y)], self.scale)
         robot = self.environment.robots[0]
         robot.state_des.reset_destination(desired_points[0],desired_points[1],0)
-        print("New desired robot state", robot.state_des.x, robot.state_des.y)
+        print("New clicked robot travel target", robot.state_des.x, robot.state_des.y)
 
 
 
     def callback_right(self, event):
         desired_points = self.reverse_scale_points([float(event.x), float(event.y)], self.scale)
+        print("New clicked goal position", desired_points[0], desired_points[1])
         self.path.set_goal(world_x = desired_points[0], world_y = desired_points[1], world_theta = .0)
-        print("New desired goal position", desired_points[0], desired_points[1])
 
         self.path.plan_path()
         self.path._show_path()

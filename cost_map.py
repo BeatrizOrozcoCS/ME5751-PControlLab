@@ -14,7 +14,7 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/maze1.png") #load map
+            self.load_map(map = "maps/pathmap.png") #load map
             #4 maps
             # office
             #roadmap
@@ -155,20 +155,6 @@ class cost_map:
                     queuelist.append([posx-1,posy])
                     distanceList[posx-1][posy] = distance
                     potentialList[posx-1][posy] = self.calculate_costmap(distance)
-
-                if (posy+1) < numCols: 
-                    if visitedList[posx-1][posy+1] == False: #top left
-                        visitedList[posx-1][posy+1] = True 
-                        queuelist.append([posx-1,posy+1])
-                        distanceList[posx-1][posy+1] = distance*1.4 #diagonals needs the distnace increased by one
-                        potentialList[posx-1][posy+1] = self.calculate_costmap(distance)
-
-                if (posy-1) >= 0:
-                    if visitedList[posx-1][posy-1] == False: # bottom left
-                        visitedList[posx-1][posy-1] = True 
-                        queuelist.append([posx-1,posy-1])
-                        distanceList[posx-1][posy-1] = distance*1.4 #diagonals needs the distnace increased by one
-                        potentialList[posx-1][posy-1] = self.calculate_costmap(distance)
                
 
             if posx+1 < numRows: #right
@@ -178,26 +164,12 @@ class cost_map:
                     distanceList[posx+1][posy] = distance
                     potentialList[posx+1][posy] = self.calculate_costmap(distance)
 
-                if (posy+1) < numCols: 
-                    if visitedList[posx+1][posy+1] == False: #top right
-                        visitedList[posx+1][posy+1] = True 
-                        queuelist.append([posx+1,posy+1])
-                        distanceList[posx+1][posy+1] = distance*1.4 #diagonals needs the distnace increased by one
-                        potentialList[posx+1][posy+1] = self.calculate_costmap(distance)
-
-                if (posy-1) >= 0:
-                    if visitedList[posx+1][posy-1] == False: # bottom right
-                        visitedList[posx+1][posy-1] = True 
-                        queuelist.append([posx+1,posy-1])
-                        distanceList[posx+1][posy-1] = distance*1.4 #diagonals needs the distnace increased by one
-                        potentialList[posx+1][posy-1] = self.calculate_costmap(distance)
-
 
             if posy-1 >= 0: #bottom
                 if visitedList[posx][posy-1] == False:
                     visitedList[posx][posy-1] = True
                     queuelist.append([posx,posy-1])
-                    distanceList[posx][posy-1] = distance*1.4
+                    distanceList[posx][posy-1] = distance
                     potentialList[posx][posy-1] = self.calculate_costmap(distance)
 
 
@@ -205,10 +177,12 @@ class cost_map:
                 if visitedList[posx][posy+1] == False:
                     visitedList[posx][posy+1] = True
                     queuelist.append([posx,posy+1])
-                    distanceList[posx][posy+1] = distance*1.4
+                    distanceList[posx][posy+1] = distance
                     potentialList[posx][posy+1] = self.calculate_costmap(distance)
    
         #np.savetxt("Log/distancemap.txt",np.array(distanceList)) 
+        self.distmap = distanceList
+        np.savetxt("Log/distancemap.txt",distanceList) #potential map for debugging
         self.costmap = potentialList
         np.savetxt("Log/potentialmap.txt",self.costmap) #potential map for debugging
         #print(self.costmap)#debugging
@@ -218,7 +192,7 @@ class cost_map:
  
     def calculate_costmap(self,distance):
         potential_cost = 0 #declare potential_cost varible
-        bufferzone = 10
+        bufferzone = 20
         if distance > bufferzone:#onces its plenty away for desired bufferzone
             pEq2 = 255
             pEq1 = 255
