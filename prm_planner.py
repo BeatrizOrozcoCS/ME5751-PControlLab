@@ -314,7 +314,7 @@ class path_planner:
             print ("We hit goal!")
             et = time.time()
             print("it took ", et-st, "seconds!")
-            print("Nodes tried: ", tries)
+            print("Attempted Nodes: ", tries)
             print("Overall node path len: ", count)
             
             points = bresenham(self.goal_node.map_i,self.goal_node.map_j,ri,rj) 

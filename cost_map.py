@@ -50,7 +50,7 @@ class cost_map:
         self.costmap=np.copy(self.map).astype(np.float)
 
     #save your costmap into a grayscale image
-    def save_vis_map(self,map="maps/testcostmap2.png"):
+    def save_vis_map(self,map="maps/costmap.png"):
         save_img = Image.fromarray(np.uint8(self.costmap))
         save_img.save(map)
 

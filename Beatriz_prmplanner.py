@@ -70,51 +70,37 @@ class path_planner:
         self._init_path_img()
         self.path = Path()
         
+        
+        #do not take out
+        print("generating Creating node network")
         self.set_start(world_x = .0, world_y = .0)
-        #self.set_goal(world_x = 0.0, world_y = 0.0, world_theta = .0)
-        #self.plan_path()
-        #self._show_path()
-#         #for cave map
+        self.set_goal(world_x = 10.0, world_y = 10.0, world_theta = .0)
+        self.pad_path()        
+        
+        self.set_start(world_x = .0, world_y = .0)
+        self.set_goal(world_x = -10.0, world_y = -10.0, world_theta = .0)
+        self.pad_path()
+        print("Starting with: ", len(self.pTree.nodes), " nodes in network")
+        print("lets go to path")
+        
+        
+        
+        
+        self.set_start(world_x = 0.0, world_y = 0.0, world_theta = .0)
         self.set_goal(world_x = -232.0, world_y = -237.0, world_theta = .0)
         self.plan_path()
         self._show_path()
-        
+#         
         self.set_start(world_x = .0, world_y = .0)
         self.set_goal(world_x = 225.0, world_y = -235.0, world_theta = .0)
         self.plan_path()
         self._show_path()
-        
+#         
         self.set_start(world_x = .0, world_y = .0)
         self.set_goal(world_x = -114.0, world_y = 236.0, world_theta = .0)
         self.plan_path()
         self._show_path()
-        #for maze map
-#         self.set_start(world_x = .0, world_y = .0)
-#         self.set_goal(world_x = -199.0, world_y = -14.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
-#         
-#         self.set_goal(world_x = -212.0, world_y = 40.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
-# 
-#         self.set_goal(world_x = 201.0, world_y = 211.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
 
-        #for concentric map
-#         self.set_start(world_x = .0, world_y = .0)
-#         self.set_goal(world_x = 9.0, world_y = 228.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
-#         
-#         self.set_goal(world_x = 232.0, world_y = -111.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
-# 
-#         self.set_goal(world_x = 5.0, world_y = 215.0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
 
     def set_start(self, world_x = 0, world_y = 0, world_theta = 0):
         self.start_state_map = Pose()
@@ -182,6 +168,126 @@ class path_planner:
             return True
         else:
             return False
+    def pad_path(self): #this helps getting the goal poitns byt growing the tree  with a netwrok of nodes
+        #this is the function you are going to work on
+###############################################################
+        st = time.time()
+        #first point
+        #grid = self.tracker(self.costmap.costmap)
+        
+        try:
+            # get the bfs map
+            bfsdistance = gp_to_sp_bfs(self.costmap.costmap, self.start_node.map_i,self.start_node.map_j,self.goal_node.map_i,self.goal_node.map_j) # (g) manhantann distance from start 
+            
+            #raious of random points
+            r=100
+            #ensure that end point does not lie in obstacle
+            if(self.costmap.costmap[self.goal_node.map_i][self.goal_node.map_j]) == 0: #depends on how you set the value of obstacle
+                print("path not possible")
+            else:         
+                #first random point        
+                count = len(self.pTree.nodes)-1 #overall path of good nodes
+                current_node_count = 0
+                #print(count)          
+                tries = 0 #nodes tried
+                hit_obstacle = True
+            
+         #first point randomly exapnads the preceding node to creat nodes  
+        
+            
+            
+            ##############################################################
+            #after getting first random point start growing tree
+            # get another random point and make sure that it does collide with with a precdeing line (no loops)
+            # encourage path getting closer to the goal point by using brush fire distance cost 
+            
+                
+                while True:
+                    #first random point        
+                    count = len(self.pTree.nodes)#overall path of good nodes
+                    #current_node_count = 0
+                    #print(count)          
+                    #tries = 0 #nodes tried
+                    hit_obstacle = True
+                    random_node_num = random.randint(0,count-1)
+                    while (hit_obstacle == True): #continue finding a random point from previously expanded nodes
+                        random_node_num = random.randint(0,count-1)
+                        
+                        ri = random.randint(0,self.map_width-1)
+                        rj = random.randint(0,self.map_height-1)
+                        tries +=1
+                        
+                        while bfsdistance[ri][rj] > bfsdistance[self.pTree.nodes[random_node_num].map_i][self.pTree.nodes[random_node_num].map_j]: #make sure its within boundaries
+                            random_node_num = random.randint(0,count-1)
+                            ri = random.randint(0,self.map_width-1)
+                            rj = random.randint(0,self.map_height-1)
+                            tries +=1
+
+                        points = bresenham(self.pTree.nodes[random_node_num].map_j,self.pTree.nodes[random_node_num].map_j,ri,rj)
+                        
+                        
+                        
+                        for p in points: #check every point in line
+                            
+                            try:
+                                if(self.costmap.costmap[p[0]][p[1]]) == 0: #depends on how you set the value of obstacle
+                                        hit_obstacle = True
+                                        break
+                                else:
+
+                                    hit_obstacle = False
+                                    
+                                pp1 = p[0]
+                                pp2 = p[1]
+                            except IndexError:
+                                hit_obstacle = True
+
+                        if(hit_obstacle==False):
+                            for p in points: #check every point in line
+                                self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0))
+                            current_node_count +=1
+                            previous_node = self.pTree.nodes[random_node_num]
+                            random_node = prm_node(ri,rj)
+                            #grid[ri,rj] = 0
+                            self.pTree.add_nodes(random_node)
+                            self.pTree.add_edges(previous_node,random_node)#add an edge from previous node to random node
+                            break
+                        
+                    if(self.check_vicinity(self.goal_node.map_i,self.goal_node.map_j,random_node.map_i,random_node.map_j,10.0)):
+                        break
+
+            
+
+                
+                points = bresenham(self.goal_node.map_i,self.goal_node.map_j,random_node.map_i,random_node.map_j) 
+
+                    
+                for p in points: #check every point in line 
+                    self.path.add_pose(Pose(map_i=p[0],map_j=p[1],theta=0))
+                        
+                self.path.save_path(file_name="Log\prm_path.csv")
+                 
+        except KeyboardInterrupt:
+            
+            a = self.pTree.nodes[len(self.pTree.nodes)-1]
+            print(a.map_i,a.map_j)
+            b = self.pTree.nodes[len(self.pTree.nodes)-2].parent
+            exitcount = 0
+            while True:
+                exitcount +=1
+
+                a = a.parent
+                
+                    
+                if a == None:
+                    break
+                else:
+                    print(a.map_i,a.map_j)
+                    
+                
+            et = time.time()
+
+
 
     def plan_path(self):
         #this is the function you are going to work on
@@ -220,9 +326,9 @@ class path_planner:
                 while True:
                     #first random point        
                     count = len(self.pTree.nodes)#overall path of good nodes
-                    current_node_count = 0
+                    #current_node_count = 0
                     #print(count)          
-                    tries = 0 #nodes tried
+                    #tries = 0 #nodes tried
                     hit_obstacle = True
                     random_node_num = random.randint(0,count-1)
                     while (hit_obstacle == True): #continue finding a random point from previously expanded nodes
@@ -236,7 +342,6 @@ class path_planner:
                             random_node_num = random.randint(0,count-1)
                             ri = random.randint(0,self.map_width-1)
                             rj = random.randint(0,self.map_height-1)
-                            tries +=1
                             tries +=1
     #                     while  (bfsdistance[ri][rj] > bfsdistance[self.start_node.map_i][self.start_node.map_j]):
     #                         ri = random.randint(self.pTree.nodes[random_node_num].map_j-r,self.pTree.nodes[random_node_num].map_j + r)

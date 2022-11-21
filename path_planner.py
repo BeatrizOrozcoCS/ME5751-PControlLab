@@ -36,23 +36,21 @@ class path_planner:
 # 487 18   (-191,-195)
 # 250 250  (0,0)
 
-#         self.set_start(world_x=0, world_y=0)
+        self.set_start(world_x=0, world_y=0)
 #         self.set_goal(world_x=-228, world_y=107)
         
-        self.set_start(world_x=-228, world_y=107)
-        self.set_goal(world_x=-133, world_y=103)
-        
-        self.set_start(world_x=-133, world_y=103)
-        self.set_goal(world_x=-167, world_y=94)
-        
-        self.set_start(world_x=-167, world_y=94)
-        self.set_goal(world_x=-173, world_y=147)
-        
-        self.set_start(world_x=-173, world_y=147)
-        self.set_goal(world_x=-233, world_y=233)
-        
-        self.set_start(world_x=-191, world_y=-195)
-        self.set_goal(world_x=-0, world_y=0)
+#         self.set_start(world_x = .0, world_y = .0)
+#         self.set_goal(world_x = -199.0, world_y = -14.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
+#         
+#         self.set_goal(world_x = -212.0, world_y = 40.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
+# 
+#         self.set_goal(world_x = 201.0, world_y = 211.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
         
         #self.set_goal(world_x= world2map(map_i=487,map_j = 18)[0], world_y=map2world(map_i=487,map_j = 18)[1], world_theta=.0)
         
@@ -69,10 +67,28 @@ class path_planner:
         #self.set_goal(world_x=-217.0, world_y=33.0, world_theta=.0) #for point [217,36]
 
         #testpoints for concentric circles
-        #self.set_goal(world_x=172.0, world_y=192.0, world_theta=.0) #for point [58,422]
-        #self.set_goal(world_x=-205.0, world_y=-61.0, world_theta=.0) # [311,45]
-        #self.set_goal(world_x=-22.0, world_y=228.0, world_theta=.0) # [22,263]
+#         self.set_start(world_x = .0, world_y = .0)
+#         self.set_goal(world_x = 9.0, world_y = 228.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
+#         
+#         self.set_goal(world_x = 232.0, world_y = -111.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
+# 
+#         self.set_goal(world_x = 5.0, world_y = 215.0, world_theta = .0)
+#         self.plan_path()
+#         self._show_path()
+        self.set_start(world_x = .0, world_y = .0)
+        self.set_goal(world_x = 225.0, world_y = -235.0, world_theta = .0)
+        self.plan_path()
+        self._show_path()
+        
+        self.set_goal(world_x = -114.0, world_y = 236.0, world_theta = .0)
+        self.plan_path()
+        self._show_path()
 
+        self.set_goal(world_x = -232.0, world_y = -237.0, world_theta = .0)
         self.plan_path()
         self._show_path()
 
@@ -446,7 +462,7 @@ def astar(grid, start, end): # Inputs are the NP array, start index, and end ind
                         plan = []
                         while currentN is not None:
                             plan.append([currentN.position])
-                            print(currentN.position)
+                            #print(currentN.position)
                             currentN = currentN.parent
                         et = time.time()
                         print("counter: ", counter)
