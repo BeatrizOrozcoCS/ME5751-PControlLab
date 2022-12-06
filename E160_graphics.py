@@ -9,7 +9,8 @@ from cost_map import *
 
 #from path_planner import * # a*
 #from prm_planner import * # greddy PRM
-from Beatriz_prmplanner import * #PRM
+#from Beatriz_prmplanner import * #PRM
+from prm_plannerV2 import * # greddy PRM
 class E160_graphics:
     def __init__(self, environment):
         self.environment = environment
@@ -111,7 +112,7 @@ class E160_graphics:
 
     def initial_draw_robot(self, robot):
         # open image
-        robot.robot_gif = Image.open("robot.png").convert('RGBA') 
+        robot.robot_gif = Image.open("truck.png").convert('RGBA') 
         robot.robot_gif = robot.robot_gif.resize((robot.L_pixel,robot.L_pixel),Image.ANTIALIAS)
         self.arrow_png = Image.open("arrows.png").convert('RGBA')
         # im = cv2.imread("maps/testmap.png",cv2.IMREAD_GRAYSCALE)

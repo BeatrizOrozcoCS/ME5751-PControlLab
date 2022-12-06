@@ -14,7 +14,9 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/pathmap.png") #load map
+            self.load_map(map = "maps/ultimate test.png") #load map
+            #self.load_map(map = "maps/maze1.png") #load map
+            #self.load_map(map = "maps/pathmap.png") #load map
             #4 maps
             # office
             #roadmap
@@ -192,7 +194,7 @@ class cost_map:
  
     def calculate_costmap(self,distance):
         potential_cost = 0 #declare potential_cost varible
-        bufferzone = 20
+        bufferzone = 50
         if distance > bufferzone:#onces its plenty away for desired bufferzone
             pEq2 = 255
             pEq1 = 255
