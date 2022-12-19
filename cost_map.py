@@ -14,9 +14,11 @@ class cost_map:
         self.map_width = int(self.graphics.environment.width*self.graphics.scale)
         self.map_height = int(self.graphics.environment.height*self.graphics.scale)
         try:
-            self.load_map(map = "maps/ultimate test.png") #load map
-            #self.load_map(map = "maps/maze1.png") #load map
-            #self.load_map(map = "maps/pathmap.png") #load map
+            # self.load_map(map = "maps/ultimate test.png") #load map
+            self.load_map(map = "maps/map_1.png") #load map
+            # self.load_map(map = "maps/map_2.png") #load map
+            # self.load_map(map = "maps/map_3.png") #load map
+            # self.load_map(map = "maps/map_4.png") #load map
             #4 maps
             # office
             #roadmap
@@ -43,9 +45,9 @@ class cost_map:
         self.map_img = self.map_img.resize((int(self.map_width),int(self.map_height)),Image.ANTIALIAS)
         # self.graphics.draw_map(map_img=self.map_img)
         self.map = cv2.imread(map,cv2.IMREAD_GRAYSCALE)
-        print(self.map)
-        print (self.map.dtype)
-        print ("Loaded map dimension: %d x %d pixel"%(self.map.shape[0],self.map.shape[1]))
+        # print(self.map)
+        # print (self.map.dtype)
+        # print ("Loaded map dimension: %d x %d pixel"%(self.map.shape[0],self.map.shape[1]))
         self.map = cv2.resize(self.map, dsize=(int(self.map_width),int(self.map_height)), interpolation=cv2.INTER_CUBIC)
         self.vis_map=np.copy(self.map) #map for visualization
         self.distmap=np.copy(self.map).astype(np.float)
@@ -81,7 +83,7 @@ class cost_map:
         white = 255
         black = 0
         #However, some block value may be dark gray
-        print(type(self.costmap))
+        # print(type(self.costmap))
         grid = self.costmap
         numRows = np.size(grid,0)
         numCols = np.size(grid,1)
@@ -194,7 +196,8 @@ class cost_map:
  
     def calculate_costmap(self,distance):
         potential_cost = 0 #declare potential_cost varible
-        bufferzone = 50
+        bufferzone = 80 # 50 good for close quarters. 50 is risky as quack. Makes it go through small cracks.
+        # 200 good for open spaces. 80 is a good meduium. Still kinda risky. Orienting car correctly at start is import to avoid over shoots.
         if distance > bufferzone:#onces its plenty away for desired bufferzone
             pEq2 = 255
             pEq1 = 255

@@ -4,6 +4,7 @@ import math
 import random
 from PIL import Image, ImageTk
 import time
+import cubic_spline_planner
 
 from Path import *
 # from Queue import Queue
@@ -57,11 +58,12 @@ class path_planner:
         self.controller = self.graphics.environment.robots[0].controller
         self.robot = self.graphics.environment.robots[0]
         #for cave map
-        self.set_start(world_x = .0, world_y = .0)
-        self.set_goal(world_x = .0, world_y = .0, world_theta = .0)
-#         self.plan_path()
-#         self._show_path()
-#         
+        self.set_start(world_x = .0, world_y = .0, )
+        self.set_goal(world_x = 230.0, world_y = 230.0, world_theta=.0)
+        self.plan_path()
+        self._show_path()
+        # self.spline()
+#
 #         self.set_goal(world_x = -114.0, world_y = 236.0, world_theta = .0)
 #         self.plan_path()
 #         self._show_path()
@@ -157,6 +159,24 @@ class path_planner:
         self.path_img=Image.frombytes('RGBA', (self.map_img_np.shape[1],self.map_img_np.shape[0]), self.map_img_np.astype('b').tostring())
         # self.path_img = toimage(self.map_img_np)
         #self.path_img.show()
+        self.graphics.draw_path(self.path_img)
+    def spline(self):
+        ax = []
+        ay = []
+        for pose in self.path.poses:
+            ax.append(pose.map_i)
+            ay.append(pose.map_j)
+
+        self.cx, self.cy, self.cyaw, self.ck, self.s = cubic_spline_planner.calc_spline_course(ax, ay,
+                                                                                               ds=.1)
+        for i in range(0,len(self.cx)-1):
+            self.map_img_np[self.cx[i]][self.cy[i]][1] =0
+            self.map_img_np[self.cx[i]][self.cy[i]][2] =255
+            self.map_img_np[self.cx[i]][self.cy[i]][3] =255
+        self.path_img = Image.frombytes('RGBA', (self.map_img_np.shape[1], self.map_img_np.shape[0]),
+                                        self.map_img_np.astype('b').tostring())
+        # self.path_img = toimage(self.map_img_np)
+        # self.path_img.show()
         self.graphics.draw_path(self.path_img)
 
     def check_vicinity(self,x1,y1,x2,y2,threshold = 1.0):
@@ -350,7 +370,9 @@ class path_planner:
                 points_e.append(p)
                     
             self.path.save_path(file_name="Log\prm_path.csv")
-            ################points_e has all the poseself.robot.state.set_goal_points(points_e)            
+
+
+            ################points_e has all the pose self.robot.state.set_goal_points(points_e)
             
             
             

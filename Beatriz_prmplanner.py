@@ -4,6 +4,7 @@ import math
 import random
 import time
 from PIL import Image, ImageTk
+import cubic_spline_planner
 
 from Path import *
 # from Queue import Queue
@@ -69,7 +70,8 @@ class path_planner:
         self.current_tracker = tracker(graphics)
         self._init_path_img()
         self.path = Path()
-        
+        self.controller = self.graphics.environment.robots[0].controller
+        self.robot = self.graphics.environment.robots[0]
         
         #do not take out
 #         print("generating Creating node network")
@@ -82,25 +84,36 @@ class path_planner:
 #         self.pad_path()
 #         print("Starting with: ", len(self.pTree.nodes), " nodes in network")
 #         print("lets go to path")
-        
-        
-        
-        
+
         self.set_start(world_x = 0.0, world_y = 0.0, world_theta = .0)
         self.set_goal(world_x = -232.0, world_y = -237.0, world_theta = .0)
         self.plan_path()
         self._show_path()
+        self.spline()
 #         
-        self.set_start(world_x = .0, world_y = .0)
+        self.set_start(world_x = .0, world_y = .0, world_theta=.0)
         self.set_goal(world_x = 225.0, world_y = -235.0, world_theta = .0)
         self.plan_path()
         self._show_path()
-#         
-        self.set_start(world_x = .0, world_y = .0)
+#
+        self.set_start(world_x = .0, world_y = .0, world_theta= .0)
         self.set_goal(world_x = -114.0, world_y = 236.0, world_theta = .0)
         self.plan_path()
         self._show_path()
 
+    def spline(self):
+        ax = np.array()
+        ay = np.arrary()
+        for pose in self.path.poses:
+            ax.append(pose.map_i)
+            ay.append(pose.map_j)
+
+        self.cx, self.cy, self.cyaw, self.ck, self.s = cubic_spline_planner.calc_spline_course(ax, ay,
+                                                                                               ds=1)
+        for i in range(0,len(self.cx)-1):
+            self.map_img_np[self.cx[i]][self.cy[i]][1] = 0
+            self.map_img_np[self.cx[i]][self.cy[i]][2] = 255
+            self.map_img_np[self.cx[i]][self.cy[i]][3] = 255
 
     def set_start(self, world_x = 0, world_y = 0, world_theta = 0):
         self.start_state_map = Pose()
@@ -155,13 +168,10 @@ class path_planner:
             self.map_img_np[map_i][map_j][1] =0
             self.map_img_np[map_i][map_j][2] =0
             self.map_img_np[map_i][map_j][3] =255
-
-        np.savetxt("file.txt", self.map_img_np[1])
-
-        self.path_img=Image.frombytes('RGBA', (self.map_img_np.shape[1],self.map_img_np.shape[0]), self.map_img_np.astype('b').tostring())
         # self.path_img = toimage(self.map_img_np)
         #self.path_img.show()
         self.graphics.draw_path(self.path_img)
+
 
     def check_vicinity(self,x1,y1,x2,y2,threshold = 1.0):
         if(math.sqrt((x1-x2)**2+(y1-y2)**2)<threshold):

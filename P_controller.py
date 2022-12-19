@@ -1,49 +1,60 @@
+import csv
+
 import cvxpy
 
-import path_planner
+from prm_plannerV2 import *
 from E160_state import *
 from E160_robot import *
+from Path import *
 import math
 import time
-import mpc
 import cubic_spline_planner
+
 # MPC and Vehicle Variables
 NX = 4  # x = x, y, v, yaw
 NU = 2  # a = [accel, steer]
-T = 5  # horizon length
+T = 2  # horizon length - higher horizon causes program to slow - 5 is okay - 9 is slow  - 3 is best so far - 2
+# Higher better overall path. Just takes forever. In this case it isnt needed. Low is performing well
+# 2 did superb. 1 is terrible.
+# 2 or 3. 2 is faster 3 is okay on speed. Ill go with 2
 
 # mpc parameters
-R = np.diag([0.01, 0.01])  # input cost matrix
-Rd = np.diag([0.01, 1.0])  # input difference cost matrix
-Q = np.diag([1.0, 1.0, 0.5, 0.5])  # state cost matrix
+R = np.diag([0.001,
+             0.001])  # input cost matrix
+Rd = np.diag([0.01,
+              1.0])  # input difference cost matrix
+Q = np.diag([2,
+             2,
+             .5,
+             0.5])  # state cost matrix
 Qf = Q  # state final matrix
-GOAL_DIS = 1.5  # goal distance
-STOP_SPEED = 0.5 / 3.6  # stop speed
-MAX_TIME = 500.0  # max simulation time
 
-# iterative paramter
-MAX_ITER = 3  # Max iteration
+# Ending Conditions
+GOAL_DIS = 1  # goal distance
+STOP_SPEED = 0.5  # stop speed
+
+# iterative parameter
+MAX_ITER = 3  # Max iteration - number of optimization attempts - higher = slower - lower = faster - 3 is okay
 DU_TH = 0.1  # iteration finish param
-
-N_IND_SEARCH = 10  # Search index number
-
-DT = 0.2  # [s] time tick
+N_IND_SEARCH = 1000 # Search index number - for some reason low numbers cause the controller to go crazy
+# - 1000 seems to be good.
+TARGET_SPEED = 20.0  # [m/s] target speed - higher speeds causes car to differ from path - slower is better for tracking
+# possibly because horizon has to be low. Controller cant plan ahead for faster speeds - 20 is good for tracking - 40 has overshoot
+# 30 is good medium
+DT = 0.1  # [s] time tick
 
 # Vehicle parameters
-LENGTH = 4.5  # [m]
-WIDTH = 2.0  # [m]
-BACKTOWHEEL = 1.0  # [m]
-WHEEL_LEN = 0.3  # [m]
-WHEEL_WIDTH = 0.2  # [m]
-TREAD = 0.7  # [m]
-WB = 2.5  # [m]
+WB = 20  # [m]
+L2 = 16
+r = 3
 
-MAX_STEER = np.deg2rad(45.0)  # maximum steering angle [rad]
+# Constraints
+MAX_STEER = np.deg2rad(40.0)  # maximum steering angle [rad]
 MAX_DSTEER = np.deg2rad(30.0)  # maximum steering speed [rad/s]
-MAX_SPEED = 20.0  # maximum speed [m/s]
-MIN_SPEED = -20.0   # minimum speed [m/s]
-MAX_ACCEL = 5.0  # maximum accel [m/ss]
-TARGET_SPEED = 10.0  # [m/s] target speed
+MAX_SPEED = 40.0  # maximum speed [m/s]
+MIN_SPEED = -MAX_SPEED  # minimum speed [m/s]
+MAX_ACCEL = 10.0  # maximum accel [m/ss]
+
 
 class State:
     """
@@ -57,9 +68,7 @@ class State:
         self.v = v
         self.predelta = None
 
-
     # MPC constants
-
 
 
 def calc_speed_profile(cx, cy, cyaw, target_speed):
@@ -73,12 +82,12 @@ def calc_speed_profile(cx, cy, cyaw, target_speed):
 
         move_direction = math.atan2(dy, dx)
 
-        if dx != 0.0 and dy != 0.0:
-            dangle = abs(pi_2_pi(move_direction - cyaw[i]))
-            if dangle >= math.pi / 4.0:
-                direction = -1.0
-            else:
-                direction = 1.0
+        # if dx != 0.0 and dy != 0.0:
+        #     dangle = abs(pi_2_pi(move_direction - cyaw[i]))
+        #     if dangle >= math.pi / 4.0:
+        #         direction = -1.0
+        #     else:
+        #         direction = 1.0
 
         if direction != 1.0:
             speed_profile[i] = - target_speed
@@ -100,12 +109,11 @@ def pi_2_pi(angle):
     return angle
 
 
-def get_linear_model_matrix(v, phi, delta,):
+def get_linear_model_matrix(v, phi, delta, ):
     NX = 4  # x = x, y, v, yaw
     NU = 2  # a = [accel, steer]
     DT = 0.2  # [s] time tick
     WB = 2.5  # [m]
-
 
     A = np.zeros((NX, NX))
     A[0, 0] = 1.0
@@ -240,12 +248,11 @@ def linear_mpc_control(xref, xbar, x0, dref):
 
         if t < (T - 1):
             cost += cvxpy.quad_form(u[:, t + 1] - u[:, t], Rd)
-            constraints += [cvxpy.abs(u[1, t + 1] - u[1, t]) <=
-                            MAX_DSTEER * DT]
+            constraints += [cvxpy.abs(u[1, t + 1] - u[1, t]) <= MAX_DSTEER * DT]
 
     cost += cvxpy.quad_form(xref[:, T] - x[:, T], Qf)
 
-    constraints += [x[:, 0] == x0]
+    constraints += [x[:, 0] == x0]  # First state is the current state
     constraints += [x[2, :] <= MAX_SPEED]
     constraints += [x[2, :] >= MIN_SPEED]
     constraints += [cvxpy.abs(u[0, :]) <= MAX_ACCEL]
@@ -275,7 +282,8 @@ def calc_ref_trajectory(state, cx, cy, cyaw, ck, sp, dl, pind):
     ncourse = len(cx)
 
     ind, _ = calc_nearest_index(state, cx, cy, cyaw, pind)
-
+    # print(ind)
+    # print(pind)
     if pind >= ind:
         ind = pind
 
@@ -331,50 +339,29 @@ class P_controller:
         if (logging == True):
             self.robot.make_headers(['pos_X', 'posY', 'posZ', 'vix', 'viy', 'wi', 'vr', 'wr'])
         self.state = State()
-        self.set_goal_points()
-        self.speed_target = 10
-        self.ax = np.array([])
-        self.ay = np.array([])
+        # self.set_goal_points()
 
     # Edit goal point list below, if you click a point using mouse, the points programmed
     # will be washed out
-    def set_goal_points(self):  # Used to initialize goal point and initial parameters for control
-        # Max/Min Variables
 
-        # here is the example of destination code
+    def initpath(self):  # Used to initialize goal point and initial parameters for control
         self.dl = 1  # m
-        # Retrieve Waypoint List from Planner
-        # for pose in path_planner.path.poses:
-        #     ax = np.append(pose.map_i)
-        #     ay = np.append(pose.map_j)
-        ax = []
-        ay = []
-        
-        
-        
-        for i in points:
-            ax.append(points[0])
-            ay.append(points[1])
 
-        # Create spline to track to goal location
-        self.cx, self.cy, self.cyaw, self.ck, self.s = cubic_spline_planner.calc_spline_course(ax, ay,
-                                                                                  ds=self.dl)
-        print(self.cx, self.cy)
-        # initial yaw compensation
-        if self.state.yaw - self.cyaw[0] >= math.pi:
-            self.state.yaw -= math.pi * 2.0
-        elif self.state.yaw - self.cyaw[0] <= -math.pi:
-            self.state.yaw += math.pi * 2.0
+        # Create Reference Trajectory from Planned Path
+        # self.create_spline()
 
-        # Goal Location
-        self.robot.state_des.add_destination(x=self.cx[-1], y=self.cy[-1], theta=self.cyaw[-1])
+        # Initialize Yaw for first step
+        self.init_yaw()
+
+        self.cyaw = smooth_yaw(self.cyaw)
+        # Final Goal Location
+        # self.robot.state_des.add_destination(x=self.cx[-1], y=self.cy[-1], theta=self.cyaw[-1])
 
         # Get speed Profile
         self.sp = calc_speed_profile(self.cx, self.cy, self.cyaw, TARGET_SPEED)
 
         # choose closes point
-        N_IND_SEARCH = 10  # Search index number
-        self.target_ind, _ = calc_nearest_index(self.state, self.cx, self.cy, self.cyaw, N_IND_SEARCH)
+        self.target_ind, _ = calc_nearest_index(self.state, self.cx, self.cy, self.cyaw, 0)
 
         # Initial state
         (c_posX, c_posY, c_theta) = self.robot.state.get_pos_state()  # get current position configuration
@@ -385,48 +372,92 @@ class P_controller:
 
     def track_point(self):
         # -------------------------------------
-
+        self.initpath()
         # ______________________________
         # All c_ means current
         (c_posX, c_posY, c_theta) = self.robot.state.get_pos_state()  # get current position configuration
         (c_v, c_w) = self.robot.state.get_local_vel_state()  # get current local velocity configuration
         # ----------------------------------
         # Main MPC Program
+
         # Get state for controller
         xref, self.target_ind, dref = calc_ref_trajectory(
             self.state, self.cx, self.cy, self.cyaw, self.ck,
             self.sp, self.dl, self.target_ind)
-
+        print("xref = ", xref)
         x0 = [self.state.x, self.state.y, self.state.v, self.state.yaw]
+        # print(x0)
 
+        # MPC Plan Time
+
+        # t = time.time()
         self.oa, self.odelta, ox, oy, oyaw, ov = iterative_linear_mpc_control(
             xref, x0, dref, self.oa, self.odelta)
-
+        # print(time.time()-t)
         if self.odelta is not None:
             di, ai = self.odelta[0], self.oa[0]
+        print("ai = ", ai)
+        print("di = ", di)
 
+        # Update State per controls
         self.state = update_state(self.state, ai, di)
-
-        c_w = self.state.v * np.tan(di) / WB
+        # -------------------------------------------------
+        # Pass Linear and Angular speed to simulation
+        c_v = self.state.v
+        c_w = c_v * np.tan(di) / WB
         # print(self.state.v)
         # print(c_w)
+
         # self.robot.set_motor_control(linear velocity (cm), angular velocity (rad))
-        self.robot.set_motor_control(self.state.v, c_w)  # use this command to set robot's speed in local frame
-        radius = .3  # m
-        wheel_spd = self.state.v / radius
-        self.robot.send_wheel_speed(wheel_spd, di)  # unit rad/s
+        self.robot.set_motor_control(c_v, c_w)  # use this command to set robot's speed in local frame
+        self.robot.send_wheel_speed(self.wheel_spd(di), math.degrees(di))  # unit rad/s
 
         # use the following to log the variables, use [] to bracket all variables you want to store
         # stored values are in log folder
-        if self.logging == True:
-            self.robot.log_data([c_posX, c_posY, c_theta, c_v, c_w])
+        # if self.logging == True:
+        #     self.robot.log_data([self.state.x, c_posY, c_theta, c_v, c_w])
 
-        # if abs(rho) < 1:  # you need to modify the reach way point criteria
-        #     if (self.robot.state_des.reach_destination()):
-        #         print("final goal reached")
-        #         self.robot.set_motor_control(.0, .0)  # stop the motor
-        #         return True
-        #     else:
-        #         print("one goal point reached, continute to next goal point")
-
+        if abs(c_posX - self.cx[-1]) < 10 and abs(c_posY - self.cy[-1]) < 10:  # you need to modify the reach way point criteria
+            if (self.robot.state_des.reach_destination()):
+                print("final goal reached")
+                self.robot.set_motor_control(.0, .0)  # stop the motor
+                return True
         return False
+
+    def create_spline(self, x, y):  # Used to set ref path in path planner
+
+        # Create spline to track to goal location
+        self.cx, self.cy, self.cyaw, self.ck, self.s = cubic_spline_planner.calc_spline_course(x, y, ds=1)
+
+        # Round to integers
+        for i in range(0, len(self.cx)):
+            self.cx[i] = int(self.cx[i])
+            self.cy[i] = int(self.cy[i])
+            self.cyaw[i] = round(self.cyaw[i],3)
+
+    def init_yaw(self):
+        # initial yaw compensation
+        if self.state.yaw - self.cyaw[0] >= math.pi:
+            self.state.yaw -= math.pi * 2.0
+        elif self.state.yaw - self.cyaw[0] <= -math.pi:
+            self.state.yaw += math.pi * 2.0
+
+    def wheel_spd(self, di):
+
+        X = WB * math.tan(math.radians(90 - di))
+        Y = WB * math.tan(math.radians(90 - di))
+        R_icr = X + L2 / 2
+        L_icr = Y - L2 / 2
+        icr_rear = X + L2 / 2
+        Rrr = X
+        Rrl = X + L2
+        Rfr = math.sqrt(X ** 2 + L2 ** 2)
+        Rfl = math.sqrt((X + L2) ** 2 + L2 ** 2)
+
+        wfr = self.state.v * (Rfr) / (R_icr * r)
+        wfl = self.state.v * (Rfl) / (L_icr * r)
+        wrr = self.state.v * (Rrr) / (icr_rear * r)
+        wrl = self.state.v * (Rrl) / (icr_rear * r)
+
+        max_speed = max(wfr, wfl, wrr, wrl)
+        return max_speed

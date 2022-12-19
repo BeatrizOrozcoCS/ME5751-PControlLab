@@ -33,6 +33,9 @@ class path_planner:
         self.plan_path()
         self._show_path()
 
+        self.controller = self.graphics.environment.robots[0].controller
+        self.robot = self.graphics.environment.robots[0]
+
     def set_start(self, world_x=0, world_y=0, world_theta=0):
         self.start_state_map = Pose()
         map_i, map_j = self.world2map(world_x, world_y)
